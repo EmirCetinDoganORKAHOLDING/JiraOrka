@@ -1,0 +1,136 @@
+@model IEnumerable<Project>
+@{
+    ViewData["Title"] = "Projeler";
+    var projects = Model.ToList();
+}
+
+<div class="page-header">
+    <h2 class="page-title"><i class="bi bi-folder2-open me-2 text-primary"></i>Projeler</h2>
+    @if (User.HasClaim("IsSuperAdmin", "true"))
+    {
+        <a href="/Projects/Create" class="btn btn-primary">
+            <i class="bi bi-folder-plus me-2"></i>Yeni Proje
+        </a>
+    }
+</div>
+
+@if (!projects.Any())
+{
+    <div class="empty-state large">
+        <i class="bi bi-folder-x"></i>
+        <h5>Henüz proje yok</h5>
+        @if (User.HasClaim("IsSuperAdmin", "true"))
+        {
+            <p class="text-muted">İlk projenizi oluşturun ve takımınızla çalışmaya başlayın.</p>
+            <a href="/Projects/Create" class="btn btn-primary">Proje Oluştur</a>
+        }
+        else
+        {
+            <p class="text-muted">Grubunuza henüz proje atanmamış.</p>
+        }
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var project in projects)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm project-card h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="project-key-large">
+                                @(project.Key ?? project.Name.Substring(0, Math.Min(3, project.Name.Length)).ToUpper())
+                            </div>
+                            @if (User.HasClaim("IsSuperAdmin", "true"))
+                            {
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                        <li><a class="dropdown-item" href="/Projects/Edit/@project.Id">
+                                            <i class="bi bi-pencil me-2"></i>Düzenle
+                                        </a></li>
+                                        <li><hr class="dropdown-divider my-1"></li>
+                                        <li>
+                                            <button class="dropdown-item text-danger"
+                                                    onclick="confirmDelete(@project.Id, '@project.Name')">
+                                                <i class="bi bi-trash me-2"></i>Sil
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            }
+                        </div>
+                        <h6 class="fw-bold mb-1">@project.Name</h6>
+                        <p class="text-muted small mb-3">@(string.IsNullOrEmpty(project.Description) ? "Açıklama yok" : (project.Description.Length > 80 ? project.Description.Substring(0, 80) + "..." : project.Description))</p>
+
+                        <div class="d-flex align-items-center gap-3 mb-3 text-muted small">
+                            <span><i class="bi bi-people me-1"></i>@project.GroupName</span>
+                        </div>
+
+                        <div class="project-progress-wrap mb-3">
+                            @{
+                                var pct = project.TaskCount > 0
+                                    ? (int)(((double)(project.TaskCount - project.OpenTaskCount) / project.TaskCount) * 100)
+                                    : 0;
+                            }
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span class="text-muted">İlerleme</span>
+                                <span class="fw-medium">%@pct</span>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-primary" style="width: @pct%"></div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-muted small">
+                                <i class="bi bi-list-task me-1"></i>
+                                <strong class="text-dark">@project.OpenTaskCount</strong> açık /
+                                <strong class="text-dark">@project.TaskCount</strong> toplam
+                            </div>
+                            <a href="/Board/Index?projectId=@project.Id" class="btn btn-primary btn-sm">
+                                <i class="bi bi-kanban me-1"></i>Board
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Projeyi Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="deleteProjectName"></strong> projesini arşivlemek istediğinize emin misiniz?</p>
+                <p class="text-muted small">Proje ve tüm görevleri arşivlenecek.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form id="deleteForm" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Arşivle</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function confirmDelete(id, name) {
+    document.getElementById('deleteProjectName').textContent = name;
+    document.getElementById('deleteForm').action = '/Projects/Delete/' + id;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+}

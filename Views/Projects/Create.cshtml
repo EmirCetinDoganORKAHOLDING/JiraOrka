@@ -1,0 +1,104 @@
+@model CreateProjectViewModel
+@{
+    ViewData["Title"] = "Yeni Proje";
+}
+
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="/Projects/Index">Projeler</a></li>
+                <li class="breadcrumb-item active">Yeni Proje</li>
+            </ol>
+        </nav>
+        <h2 class="page-title mb-0"><i class="bi bi-folder-plus me-2 text-primary"></i>Yeni Proje</h2>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form method="post" asp-action="Create">
+                    <div asp-validation-summary="All" class="alert alert-danger small py-2"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label asp-for="Name" class="form-label fw-medium">Proje Adı</label>
+                            <input asp-for="Name" class="form-control" placeholder="Örn: E-Ticaret Platformu" id="projectName" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Key" class="form-label fw-medium">
+                                Proje Anahtarı
+                                <span class="text-muted small fw-normal">(2-10 harf)</span>
+                            </label>
+                            <input asp-for="Key" class="form-control text-uppercase" placeholder="ETP" id="projectKey"
+                                   maxlength="10" style="letter-spacing: 2px; font-weight: bold;" />
+                            <span asp-validation-for="Key" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Description" class="form-label fw-medium">Açıklama</label>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Proje hakkında kısa açıklama..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="GroupId" class="form-label fw-medium">Yetki Grubu <span class="text-muted fw-normal small">(opsiyonel)</span></label>
+                            <select asp-for="GroupId" asp-items="Model.Groups" class="form-select">
+                                <option value="">— Grup seçmeyin —</option>
+                            </select>
+                            <div class="form-text">Bu gruptaki tüm kullanıcılar projeyi otomatik görebilir.</div>
+                        </div>
+
+                        @if (Model.Users.Any())
+                        {
+                            <div class="col-12">
+                                <label class="form-label fw-medium">
+                                    <i class="bi bi-people me-1 text-primary"></i>Bireysel Üyeler
+                                    <span class="text-muted fw-normal small">(opsiyonel)</span>
+                                </label>
+                                <div class="border rounded p-3" style="max-height:220px;overflow-y:auto;background:#f8fafc;">
+                                    <div class="row g-2">
+                                        @foreach (var u in Model.Users)
+                                        {
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox"
+                                                           name="MemberIds" value="@u.Value"
+                                                           id="user_@u.Value"
+                                                           @(Model.MemberIds.Contains(int.Parse(u.Value)) ? "checked" : "") />
+                                                    <label class="form-check-label small" for="user_@u.Value">
+                                                        @u.Text
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="form-text">Gruba ek olarak projeye erişebilecek bireysel kullanıcılar.</div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Proje Oluştur
+                        </button>
+                        <a href="/Projects/Index" class="btn btn-outline-secondary">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.getElementById('projectName')?.addEventListener('input', function() {
+    const key = this.value.replace(/[^a-zA-Z]/g, '').substring(0, 5).toUpperCase();
+    document.getElementById('projectKey').value = key;
+});
+document.getElementById('projectKey')?.addEventListener('input', function() {
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+});
+</script>
+}

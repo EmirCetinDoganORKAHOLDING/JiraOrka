@@ -1,0 +1,115 @@
+@model TaskFilterViewModel
+@using Tezgah.Models
+@{
+    ViewData["Title"] = "Görev Listesi";
+}
+
+<div class="page-header">
+    <h2 class="page-title"><i class="bi bi-list-task me-2 text-primary"></i>Görev Listesi</h2>
+</div>
+
+<!-- Filtre Kartı -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 pt-4 pb-2 px-4">
+        <h6 class="fw-bold mb-0"><i class="bi bi-funnel me-2"></i>Filtrele</h6>
+    </div>
+    <div class="card-body px-4 pb-4">
+        <form method="get" asp-action="Tasks">
+            <div class="row g-3">
+                <!-- Tarih Aralığı -->
+                <div class="col-md-3">
+                    <label class="form-label fw-medium small">Başlangıç Tarihi</label>
+                    <input type="date" name="startDate" id="f_startDate" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-medium small">Bitiş Tarihi</label>
+                    <input type="date" name="endDate" id="f_endDate" class="form-control form-control-sm" />
+                </div>
+
+                <!-- Talep Eden -->
+                <div class="col-md-3">
+                    <label class="form-label fw-medium small">Talep Eden (İsim Ara)</label>
+                    <input type="text" name="requesterName" id="f_requesterName"
+                           class="form-control form-control-sm" placeholder="İsim ile ara..." />
+                </div>
+
+                <!-- Atanan -->
+                <div class="col-md-3">
+                    <label class="form-label fw-medium small">Atanan Kişi</label>
+                    <select name="assignedToId" id="f_assignedToId" class="form-select form-select-sm">
+                        <option value="">Tümü</option>
+                        @foreach (var u in Model.Users)
+                        {
+                            <option value="@u.Value">@u.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Proje -->
+                <div class="col-md-3">
+                    <label class="form-label fw-medium small">Proje</label>
+                    <select name="projectId" id="f_projectId" class="form-select form-select-sm">
+                        <option value="">Tüm Projeler</option>
+                        @foreach (var p in Model.Projects)
+                        {
+                            <option value="@p.Value">@p.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Durum -->
+                <div class="col-md-3">
+                    <label class="form-label fw-medium small">Durum</label>
+                    <select name="status" id="f_status" class="form-select form-select-sm">
+                        <option value="">Tümü</option>
+                        <option value="0">&#x2b1c; Yapılacak</option>
+                        <option value="1">&#x1f535; Devam Ediyor</option>
+                        <option value="2">&#x1f7e1; İncelemede</option>
+                        <option value="3">&#x2705; Tamamlandı</option>
+                    </select>
+                </div>
+
+                <!-- Öncelik -->
+                <div class="col-md-3">
+                    <label class="form-label fw-medium small">Öncelik</label>
+                    <select name="priority" id="f_priority" class="form-select form-select-sm">
+                        <option value="">Tümü</option>
+                        <option value="0">&#x1f7e2; Düşük</option>
+                        <option value="1">&#x1f7e1; Orta</option>
+                        <option value="2">&#x1f7e0; Yüksek</option>
+                        <option value="3">&#x1f534; Kritik</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm px-4">
+                        <i class="bi bi-search me-1"></i>Filtrele
+                    </button>
+                    <a href="/Admin/Tasks" class="btn btn-outline-secondary btn-sm">Temizle</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Sonuç Sayısı -->
+<div class="d-flex align-items-center justify-content-between mb-2">
+    <span class="text-muted small"><strong>@Model.Tasks.Count()</strong> görev listeleniyor</span>
+</div>
+
+<!-- Görev Tablosu -->
+@await Html.PartialAsync("_TaskTable", Model.Tasks)
+
+@section Scripts {
+<script>
+(function () {
+    var p = new URLSearchParams(window.location.search);
+    ['startDate','endDate'].forEach(function(k) {
+        var v = p.get(k); if (v) { var el = document.getElementById('f_' + k); if (el) el.value = v; }
+    });
+    ['requesterName','assignedToId','projectId','status','priority'].forEach(function(k) {
+        var v = p.get(k); if (v) { var el = document.getElementById('f_' + k); if (el) el.value = v; }
+    });
+})();
+</script>
+}

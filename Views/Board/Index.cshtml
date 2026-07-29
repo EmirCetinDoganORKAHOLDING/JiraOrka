@@ -1,0 +1,278 @@
+@model BoardViewModel
+@{
+    ViewData["Title"] = "Kanban Board";
+    var currentUserFullName = User.FindFirst("FullName")?.Value ?? "";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <h2 class="page-title mb-0"><i class="bi bi-kanban me-2 text-primary"></i>Kanban Board</h2>
+        @if (Model.Projects.Any())
+        {
+            <div class="dropdown">
+                <button class="btn btn-sm dropdown-toggle d-flex align-items-center gap-2 px-3 py-2
+                               @(Model.ProjectId > 0 ? "btn-primary" : "btn-outline-secondary")"
+                        type="button" data-bs-toggle="dropdown">
+                    @if (Model.ProjectId > 0)
+                    {
+                        <span class="badge bg-white text-primary fw-bold" style="font-size:10px;">
+                            @(string.IsNullOrEmpty(Model.ProjectKey) ? Model.ProjectName.Substring(0, Math.Min(3, Model.ProjectName.Length)).ToUpper() : Model.ProjectKey)
+                        </span>
+                        <span>@Model.ProjectName</span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-folder2"></i>
+                        <span>Proje Seç</span>
+                    }
+                </button>
+                <ul class="dropdown-menu shadow-sm border-0" style="min-width:260px;">
+                    @foreach (var p in Model.Projects)
+                    {
+                        var key = string.IsNullOrEmpty(p.Key)
+                            ? p.Name.Substring(0, Math.Min(3, p.Name.Length)).ToUpper()
+                            : p.Key;
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-3 py-2 @(p.Id == Model.ProjectId ? "active" : "")"
+                               href="/Board/Index?projectId=@p.Id">
+                                <span class="project-key-badge d-inline-flex align-items-center justify-content-center"
+                                      style="width:32px;height:32px;font-size:10px;flex-shrink:0;">@key</span>
+                                <div>
+                                    <div class="fw-semibold" style="font-size:13px;">@p.Name</div>
+                                    <div class="text-muted" style="font-size:11px;">@p.GroupName</div>
+                                </div>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+        @if (Model.ProjectId > 0)
+        {
+            <button id="myTasksBtn" class="btn btn-outline-info btn-sm" onclick="toggleMyTasks()" title="Sadece bana atanan görevleri göster">
+                <i class="bi bi-person-check me-1"></i>Benim Görevlerim
+            </button>
+        }
+    </div>
+    @if (Model.ProjectId > 0 && !User.HasClaim("IsReadOnly", "true"))
+    {
+        <a href="/Tasks/Create?projectId=@Model.ProjectId" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Görev Ekle
+        </a>
+    }
+</div>
+
+@if (!Model.Projects.Any())
+{
+    <div class="empty-state large">
+        <i class="bi bi-kanban"></i>
+        <h5>Henüz proje yok</h5>
+        <p class="text-muted">Kanban board'u kullanmak için önce bir proje oluşturun.</p>
+        @if (User.HasClaim("IsSuperAdmin", "true"))
+        {
+            <a href="/Projects/Create" class="btn btn-primary">Proje Oluştur</a>
+        }
+    </div>
+}
+else if (Model.ProjectId == 0)
+{
+    <div class="empty-state large">
+        <i class="bi bi-arrow-up-circle"></i>
+        <h5>Proje Seçin</h5>
+        <p class="text-muted">Yukarıdaki menüden bir proje seçin.</p>
+    </div>
+}
+else
+{
+    <div class="kanban-board" id="kanban-board" data-project-id="@Model.ProjectId">
+        @{
+            var columns = new[]
+            {
+                ("todo", "Yapılacak", "bi-circle", "col-todo", Model.TodoTasks, 0),
+                ("inprogress", "Devam Ediyor", "bi-arrow-clockwise", "col-inprogress", Model.InProgressTasks, 1),
+                ("inreview", "İncelemede", "bi-eye", "col-inreview", Model.InReviewTasks, 2),
+                ("done", "Tamamlandı", "bi-check-circle", "col-done", Model.DoneTasks, 3)
+            };
+        }
+        @foreach (var (id, label, icon, cssClass, tasks, statusInt) in columns)
+        {
+            <div class="kanban-column @cssClass">
+                <div class="kanban-column-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi @icon"></i>
+                        <span class="column-title">@label</span>
+                        <span class="badge bg-secondary rounded-pill">@tasks.Count</span>
+                    </div>
+                </div>
+                <div class="kanban-column-body sortable-list" data-status="@statusInt" id="col-@id">
+                    @foreach (var task in tasks)
+                    {
+                        <div class="task-card" data-task-id="@task.Id" data-assigned-name="@(task.AssignedToName ?? "")">
+                            <div class="task-card-header">
+                                <span class="priority-badge @task.PriorityClass">@task.PriorityLabel</span>
+                                <a href="/Tasks/Details/@task.Id" class="task-card-menu" title="Detay">
+                                    <i class="bi bi-three-dots"></i>
+                                </a>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 mb-1">
+                                @if (!string.IsNullOrEmpty(task.GroupName))
+                                {
+                                    <span class="badge rounded-pill fw-normal"
+                                          style="background:#ede9fe;color:#6d28d9;font-size:10px;padding:2px 7px;">
+                                        <i class="bi bi-people-fill me-1" style="font-size:9px;"></i>@task.GroupName
+                                    </span>
+                                }
+                                @if (!string.IsNullOrEmpty(task.ProjectName))
+                                {
+                                    <span class="badge rounded-pill fw-normal"
+                                          style="background:#dbeafe;color:#1d4ed8;font-size:10px;padding:2px 7px;">
+                                        <i class="bi bi-folder-fill me-1" style="font-size:9px;"></i>@task.ProjectName
+                                    </span>
+                                }
+                            </div>
+                            <a href="/Tasks/Details/@task.Id" class="task-card-title">@task.Title</a>
+                            @if (!string.IsNullOrEmpty(task.Description))
+                            {
+                                <p class="task-card-desc">@(task.Description.Length > 80 ? task.Description.Substring(0, 80) + "..." : task.Description)</p>
+                            }
+                            <div class="task-card-footer">
+                                @if (!string.IsNullOrEmpty(task.AssignedToName))
+                                {
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div class="assignee-avatar" title="@task.AssignedToName">
+                                            @task.AssignedToName.FirstOrDefault().ToString().ToUpper()
+                                        </div>
+                                        <span class="text-muted small fw-medium">@task.AssignedToName</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small"><i class="bi bi-person-x me-1"></i>Atanmadı</span>
+                                }
+                                <div class="task-card-meta">
+                                    @if (task.DueDate.HasValue)
+                                    {
+                                        <span class="@(task.DueDate < DateTime.UtcNow && task.Status != Tezgah.Models.TaskStatus.Done ? "text-danger" : "text-muted") small">
+                                            <i class="bi bi-calendar3"></i> @task.DueDate.Value.ToString("d MMM")
+                                        </span>
+                                    }
+                                    @if (task.Comments?.Count > 0)
+                                    {
+                                        <span class="text-muted small"><i class="bi bi-chat"></i> @task.Comments.Count</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (!User.HasClaim("IsReadOnly", "true"))
+                {
+                    <div class="kanban-column-footer">
+                        <a href="/Tasks/Create?projectId=@Model.ProjectId" class="add-task-btn">
+                            <i class="bi bi-plus"></i> Görev Ekle
+                        </a>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const lists = document.querySelectorAll('.sortable-list');
+    const token = document.querySelector('meta[name="csrf-token"]')?.content ||
+        '@Html.AntiForgeryToken()'.match(/value="([^"]+)"/)?.[1] || '';
+
+    lists.forEach(list => {
+        Sortable.create(list, {
+            group: 'kanban',
+            animation: 200,
+            ghostClass: 'task-card-ghost',
+            dragClass: 'task-card-dragging',
+            handle: '.task-card',
+            onEnd: async function(evt) {
+                const taskId = evt.item.dataset.taskId;
+                const newStatus = evt.to.dataset.status;
+
+                try {
+                    const response = await fetch('/Tasks/UpdateStatus', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': getAntiForgeryToken()
+                        },
+                        body: JSON.stringify({ taskId: parseInt(taskId), status: parseInt(newStatus) })
+                    });
+                    const result = await response.json();
+                    if (!result.success) {
+                        showToast('Durum güncellenemedi: ' + result.message, 'error');
+                        // Revert
+                        evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
+                    } else {
+                        updateColumnCounts();
+                        showToast('Görev durumu güncellendi', 'success');
+                    }
+                } catch (err) {
+                    showToast('Bağlantı hatası', 'error');
+                    evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
+                }
+            }
+        });
+    });
+
+    function getAntiForgeryToken() {
+        const input = document.querySelector('input[name="__RequestVerificationToken"]');
+        return input ? input.value : '';
+    }
+
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification toast-${type}`;
+        toast.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+});
+
+let myTasksActive = false;
+const currentUserName = '@Html.Raw(currentUserFullName)';
+
+function toggleMyTasks() {
+    myTasksActive = !myTasksActive;
+    const btn = document.getElementById('myTasksBtn');
+
+    document.querySelectorAll('.task-card').forEach(card => {
+        const assignedName = card.dataset.assignedName || '';
+        if (myTasksActive && assignedName !== currentUserName) {
+            card.style.display = 'none';
+        } else {
+            card.style.display = '';
+        }
+    });
+
+    updateColumnCounts();
+
+    if (myTasksActive) {
+        btn.classList.remove('btn-outline-info');
+        btn.classList.add('btn-info', 'text-white');
+        btn.innerHTML = '<i class="bi bi-person-fill-check me-1"></i>Benim Görevlerim';
+    } else {
+        btn.classList.remove('btn-info', 'text-white');
+        btn.classList.add('btn-outline-info');
+        btn.innerHTML = '<i class="bi bi-person-check me-1"></i>Benim Görevlerim';
+    }
+}
+
+function updateColumnCounts() {
+    document.querySelectorAll('.kanban-column').forEach(col => {
+        const count = col.querySelectorAll('.task-card:not([style*="display: none"])').length;
+        const badge = col.querySelector('.badge');
+        if (badge) badge.textContent = count;
+    });
+}
+</script>
+@Html.AntiForgeryToken()
+}

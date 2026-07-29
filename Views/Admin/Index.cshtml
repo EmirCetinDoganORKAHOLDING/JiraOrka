@@ -1,0 +1,184 @@
+@model AdminDashboardViewModel
+@using Tezgah.Models
+@{
+    ViewData["Title"] = "Admin Panel";
+}
+
+<div class="page-header">
+    <h2 class="page-title"><i class="bi bi-speedometer2 me-2 text-primary"></i>Admin Panel</h2>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-blue">
+            <div class="stat-icon"><i class="bi bi-people"></i></div>
+            <div class="stat-value">@Model.TotalUsers</div>
+            <div class="stat-label">Kullanıcı</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-purple">
+            <div class="stat-icon"><i class="bi bi-shield-check"></i></div>
+            <div class="stat-value">@Model.TotalGroups</div>
+            <div class="stat-label">Yetki Grubu</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-teal">
+            <div class="stat-icon"><i class="bi bi-folder2"></i></div>
+            <div class="stat-value">@Model.TotalProjects</div>
+            <div class="stat-label">Proje</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-gray">
+            <div class="stat-icon"><i class="bi bi-list-task"></i></div>
+            <div class="stat-value">@Model.TotalTasks</div>
+            <div class="stat-label">Toplam Görev</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-orange">
+            <div class="stat-icon"><i class="bi bi-hourglass"></i></div>
+            <div class="stat-value">@Model.OpenTasks</div>
+            <div class="stat-label">Açık Görev</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="stat-card stat-green">
+            <div class="stat-icon"><i class="bi bi-check2-all"></i></div>
+            <div class="stat-value">@Model.DoneTasks</div>
+            <div class="stat-label">Tamamlanan</div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm hover-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="action-icon bg-blue-soft text-primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0">Kullanıcı Yönetimi</h6>
+                        <small class="text-muted">@Model.TotalUsers kullanıcı</small>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">Kullanıcı ekle, düzenle, yetki grubuna ata.</p>
+                <div class="d-flex gap-2">
+                    <a href="/Admin/Users" class="btn btn-outline-primary btn-sm">Listele</a>
+                    <a href="/Admin/CreateUser" class="btn btn-primary btn-sm">+ Ekle</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm hover-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="action-icon bg-purple-soft text-purple">
+                        <i class="bi bi-shield-fill-check"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0">Yetki Grupları</h6>
+                        <small class="text-muted">@Model.TotalGroups grup</small>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">Gruplar oluştur, izinleri yönet.</p>
+                <div class="d-flex gap-2">
+                    <a href="/Admin/Groups" class="btn btn-outline-purple btn-sm">Listele</a>
+                    <a href="/Admin/CreateGroup" class="btn btn-purple btn-sm">+ Ekle</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm hover-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="action-icon bg-teal-soft text-teal">
+                        <i class="bi bi-folder-fill"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0">Projeler</h6>
+                        <small class="text-muted">@Model.TotalProjects proje</small>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">Proje oluştur, gruplara ata.</p>
+                <div class="d-flex gap-2">
+                    <a href="/Projects/Index" class="btn btn-outline-teal btn-sm">Listele</a>
+                    <a href="/Projects/Create" class="btn btn-teal btn-sm">+ Ekle</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm hover-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="action-icon bg-orange-soft text-orange">
+                        <i class="bi bi-list-task"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0">Görev Listesi</h6>
+                        <small class="text-muted">@Model.TotalTasks görev</small>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">Görevleri filtrele, talep eden ve tarihe göre ara.</p>
+                <div class="d-flex gap-2">
+                    <a href="/Admin/Tasks" class="btn btn-outline-orange btn-sm">Listele &amp; Filtrele</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TÜM KULLANICILAR ===== -->
+<div class="d-flex align-items-center justify-content-between mt-4 mb-3">
+    <h5 class="fw-bold mb-0"><i class="bi bi-people me-2 text-primary"></i>Tüm Kullanıcılar</h5>
+    <a href="/Admin/Users" class="btn btn-outline-primary btn-sm">Tümünü Yönet</a>
+</div>
+
+<div class="row g-3">
+    @foreach (var user in Model.Users)
+    {
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="/Admin/UserKanban/@user.Id" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card h-100">
+                    <div class="card-body p-3 d-flex align-items-center gap-3">
+                        <div class="table-avatar flex-shrink-0 @(user.IsSuperAdmin ? "bg-warning text-dark" : "")">
+                            @user.FullName.FirstOrDefault().ToString().ToUpper()
+                        </div>
+                        <div class="overflow-hidden">
+                            <div class="fw-semibold text-dark text-truncate">@user.FullName</div>
+                            <div class="small text-muted text-truncate">
+                                @if (user.IsSuperAdmin)
+                                {
+                                    <span><i class="bi bi-star-fill text-warning me-1"></i>Süper Admin</span>
+                                }
+                                else
+                                {
+                                    @(user.GroupName ?? "Grup yok")
+                                }
+                            </div>
+                            <div class="mt-1">
+                                @if (user.IsActive)
+                                {
+                                    <span class="badge bg-success-soft text-success" style="font-size:.65rem;">Aktif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-soft text-danger" style="font-size:.65rem;">Pasif</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    }
+</div>

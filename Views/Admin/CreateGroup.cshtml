@@ -1,0 +1,67 @@
+@model CreateGroupViewModel
+@{
+    ViewData["Title"] = "Yeni Yetki Grubu";
+}
+
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="/Admin/Groups">Yetki Grupları</a></li>
+                <li class="breadcrumb-item active">Yeni Grup</li>
+            </ol>
+        </nav>
+        <h2 class="page-title mb-0"><i class="bi bi-shield-plus me-2 text-primary"></i>Yeni Yetki Grubu</h2>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form method="post" asp-action="CreateGroup">
+                    <div asp-validation-summary="All" class="alert alert-danger small py-2"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label fw-medium">Grup Adı</label>
+                        <input asp-for="Name" class="form-control" placeholder="Örn: Geliştirici Takımı" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-4">
+                        <label asp-for="Description" class="form-label fw-medium">Açıklama</label>
+                        <textarea asp-for="Description" class="form-control" rows="2" placeholder="Grup hakkında kısa açıklama..."></textarea>
+                    </div>
+
+                    <div class="card bg-light border-0 p-3 mb-4">
+                        <h6 class="fw-semibold mb-3"><i class="bi bi-toggles me-2 text-primary"></i>İzinler</h6>
+                        <div class="form-check form-switch mb-2">
+                            <input asp-for="CanCreateProjects" class="form-check-input" type="checkbox" checked />
+                            <label asp-for="CanCreateProjects" class="form-check-label">
+                                <i class="bi bi-folder-plus text-success me-1"></i>Proje oluşturabilir
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input asp-for="CanManageTasks" class="form-check-input" type="checkbox" checked />
+                            <label asp-for="CanManageTasks" class="form-check-label">
+                                <i class="bi bi-list-check text-primary me-1"></i>Görev yönetebilir
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input asp-for="CanViewReports" class="form-check-input" type="checkbox" />
+                            <label asp-for="CanViewReports" class="form-check-label">
+                                <i class="bi bi-bar-chart text-purple me-1"></i>Raporları görebilir
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Grup Oluştur
+                        </button>
+                        <a href="/Admin/Groups" class="btn btn-outline-secondary">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

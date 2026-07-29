@@ -1,0 +1,284 @@
+@model TaskItem
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="/Board/Index?projectId=@Model.ProjectId">Board</a></li>
+                <li class="breadcrumb-item text-muted text-truncate" style="max-width: 200px;">@Model.ProjectName</li>
+                <li class="breadcrumb-item active">Görev Detayı</li>
+            </ol>
+        </nav>
+        <h2 class="page-title mb-0">@Model.Title</h2>
+    </div>
+    @if (!User.HasClaim("IsReadOnly", "true"))
+    {
+        <div class="d-flex gap-2">
+            <a href="/Tasks/Edit/@Model.Id" class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-2"></i>Düzenle
+            </a>
+            <form method="post" asp-action="Delete" asp-route-id="@Model.Id"
+                  onsubmit="return confirm('Görevi silmek istediğinize emin misiniz?')">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-trash me-2"></i>Sil
+                </button>
+            </form>
+        </div>
+    }
+</div>
+
+<div class="row g-4">
+    <!-- Task Info -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex gap-2 mb-4 flex-wrap">
+                    <span class="badge-status status-@Model.Status.ToString().ToLower() px-3 py-2">
+                        @Model.StatusLabel
+                    </span>
+                    <span class="priority-badge-lg @Model.PriorityClass">
+                        @Model.PriorityLabel Öncelik
+                    </span>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="task-description">
+                        <h6 class="fw-semibold text-muted mb-2">AÇIKLAMA</h6>
+                        <p class="mb-0">@Model.Description</p>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted fst-italic">Açıklama yok.</p>
+                }
+            </div>
+        </div>
+
+        <!-- Comments -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-bottom px-4 pt-4 pb-3">
+                <h6 class="fw-bold mb-0">
+                    <i class="bi bi-chat-square-text me-2 text-primary"></i>
+                    Yorumlar (@Model.Comments.Count)
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                @if (!Model.Comments.Any())
+                {
+                    <p class="text-muted small text-center py-2">Henüz yorum yok. İlk yorumu siz ekleyin!</p>
+                }
+                else
+                {
+                    <div class="comments-list mb-4">
+                        @foreach (var comment in Model.Comments)
+                        {
+                            <div class="comment-item">
+                                <div class="comment-avatar">
+                                    @comment.UserFullName.FirstOrDefault().ToString().ToUpper()
+                                </div>
+                                <div class="comment-body">
+                                    <div class="comment-header">
+                                        <strong>@comment.UserFullName</strong>
+                                        <span class="text-muted small ms-2">@comment.CreatedAt.ToString("d MMM yyyy HH:mm")</span>
+                                    </div>
+                                    <p class="mb-1">@comment.Content</p>
+                                    @if (comment.Attachments.Any())
+                                    {
+                                        <div class="d-flex flex-wrap gap-2 mt-2">
+                                            @foreach (var att in comment.Attachments)
+                                            {
+                                                <a href="/uploads/attachments/@att.StoredFileName"
+                                                   target="_blank"
+                                                   class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                                                   title="@att.FileName (@att.FileSizeLabel)">
+                                                    <i class="bi @att.FileIcon"></i>
+                                                    <span class="text-truncate" style="max-width:140px;">@att.FileName</span>
+                                                    <span class="text-muted" style="font-size:.7rem;">@att.FileSizeLabel</span>
+                                                </a>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (!User.HasClaim("IsReadOnly", "true"))
+                {
+                    <form method="post" asp-action="AddComment" asp-route-taskId="@Model.Id"
+                          enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div class="d-flex gap-3 align-items-start">
+                            <div class="comment-avatar-sm">
+                                @(User.FindFirst("FullName")?.Value?.FirstOrDefault().ToString().ToUpper())
+                            </div>
+                            <div class="flex-grow-1">
+                                <textarea name="content" class="form-control" rows="3"
+                                          placeholder="Yorum ekleyin..." required></textarea>
+
+                                <!-- Dosya Eki -->
+                                <div class="mt-2">
+                                    <label class="form-label small fw-medium text-muted mb-1">
+                                        <i class="bi bi-paperclip me-1"></i>Dosya Ekle (opsiyonel, birden fazla seçebilirsiniz)
+                                    </label>
+                                    <input type="file" name="attachments" class="form-control form-control-sm"
+                                           multiple id="attachmentInput" />
+                                    <div id="filePreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+                                </div>
+
+                                <div class="mt-2">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-send me-2"></i>Yorum Ekle
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted small fst-italic text-center py-2">
+                        <i class="bi bi-eye me-1"></i>Salt-okunur erişim — yorum eklenemez.
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Info -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3 text-muted">GÖREV BİLGİLERİ</h6>
+
+                <dl class="task-meta-list">
+                    <dt><i class="bi bi-folder me-2 text-muted"></i>Proje</dt>
+                    <dd>
+                        <a href="/Projects/Details/@Model.ProjectId" class="text-decoration-none fw-medium">
+                            @Model.ProjectName
+                        </a>
+                    </dd>
+
+                    <dt><i class="bi bi-person me-2 text-muted"></i>Atanan</dt>
+                    <dd>
+                        @if (!string.IsNullOrEmpty(Model.AssignedToName))
+                        {
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="mini-avatar">@Model.AssignedToName.FirstOrDefault().ToString().ToUpper()</div>
+                                @Model.AssignedToName
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Atanmadı</span>
+                        }
+                    </dd>
+
+                    <dt><i class="bi bi-person-plus me-2 text-muted"></i>Oluşturan</dt>
+                    <dd>@Model.CreatedByName</dd>
+
+                    @if (!string.IsNullOrEmpty(Model.RequesterName) || Model.RequesterId.HasValue)
+                    {
+                        <dt><i class="bi bi-hand-index me-2 text-muted"></i>Talep Eden</dt>
+                        <dd>
+                            <div class="d-flex align-items-center gap-2">
+                                @if (Model.RequesterId.HasValue)
+                                {
+                                    <div class="mini-avatar">@(Model.RequesterName?.FirstOrDefault().ToString().ToUpper())</div>
+                                }
+                                <span class="fw-medium">@Model.RequesterName</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.RequesterDetails))
+                            {
+                                <div class="text-muted small mt-1">@Model.RequesterDetails</div>
+                            }
+                        </dd>
+                    }
+
+                    @if (Model.DueDate.HasValue)
+                    {
+                        <dt><i class="bi bi-calendar3 me-2 text-muted"></i>Son Tarih</dt>
+                        <dd class="@(Model.DueDate < DateTime.UtcNow && Model.Status != Tezgah.Models.TaskStatus.Done ? "text-danger fw-medium" : "")">
+                            @Model.DueDate.Value.ToString("d MMMM yyyy")
+                            @if (Model.DueDate < DateTime.UtcNow && Model.Status != Tezgah.Models.TaskStatus.Done)
+                            {
+                                <span class="badge bg-danger ms-1">Gecikti</span>
+                            }
+                        </dd>
+                    }
+
+                    <dt><i class="bi bi-clock me-2 text-muted"></i>Oluşturulma</dt>
+                    <dd class="text-muted">@Model.CreatedAt.ToString("d MMMM yyyy HH:mm")</dd>
+
+                    <dt><i class="bi bi-arrow-repeat me-2 text-muted"></i>Güncelleme</dt>
+                    <dd class="text-muted">@Model.UpdatedAt.ToString("d MMMM yyyy HH:mm")</dd>
+                </dl>
+
+                <hr />
+
+                <!-- Quick Status Change -->
+                <h6 class="fw-bold mb-3 text-muted">DURUMU DEĞİŞTİR</h6>
+                <div class="d-grid gap-2">
+                    @{
+                        var statuses = new[] {
+                            (0, "Yapılacak", "bi-circle", "btn-outline-secondary"),
+                            (1, "Devam Ediyor", "bi-arrow-clockwise", "btn-outline-primary"),
+                            (2, "İncelemede", "bi-eye", "btn-outline-warning"),
+                            (3, "Tamamlandı", "bi-check-circle", "btn-outline-success")
+                        };
+                    }
+                    @foreach (var (val, label, icon, cls) in statuses)
+                    {
+                        if ((int)Model.Status != val)
+                        {
+                            <button class="btn @cls btn-sm"
+                                    onclick="quickUpdateStatus(@Model.Id, @val)">
+                                <i class="bi @icon me-1"></i>@label
+                            </button>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+@Html.AntiForgeryToken()
+<script>
+// Dosya önizleme
+document.getElementById('attachmentInput')?.addEventListener('change', function() {
+    const preview = document.getElementById('filePreview');
+    preview.innerHTML = '';
+    Array.from(this.files).forEach(function(file) {
+        const size = file.size < 1024 ? file.size + ' B'
+            : file.size < 1048576 ? (file.size/1024).toFixed(1) + ' KB'
+            : (file.size/1048576).toFixed(1) + ' MB';
+        const chip = document.createElement('span');
+        chip.className = 'badge bg-secondary d-flex align-items-center gap-1';
+        chip.style.fontSize = '.75rem';
+        chip.innerHTML = '<i class="bi bi-paperclip"></i>' + file.name + ' <span class="text-white-50">(' + size + ')</span>';
+        preview.appendChild(chip);
+    });
+});
+</script>
+<script>
+async function quickUpdateStatus(taskId, status) {
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    const res = await fetch('/Tasks/UpdateStatus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token || '' },
+        body: JSON.stringify({ taskId, status })
+    });
+    const data = await res.json();
+    if (data.success) location.reload();
+    else alert('Hata: ' + data.message);
+}
+</script>
+}

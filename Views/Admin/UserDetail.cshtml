@@ -1,0 +1,201 @@
+@model UserDetailViewModel
+@using Tezgah.Models
+@{
+    ViewData["Title"] = Model.User.FullName + " - Detay";
+}
+
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="/Admin/Users">Kullanıcılar</a></li>
+                <li class="breadcrumb-item active">@Model.User.FullName</li>
+            </ol>
+        </nav>
+        <h2 class="page-title mb-0">
+            <i class="bi bi-person-lines-fill me-2 text-primary"></i>@Model.User.FullName
+        </h2>
+    </div>
+    <a href="/Admin/EditUser/@Model.User.Id" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-pencil me-1"></i>Düzenle
+    </a>
+</div>
+
+<!-- Kullanıcı Bilgileri + Özet İstatistikler -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="table-avatar @(Model.User.IsSuperAdmin ? "bg-warning text-dark" : "") fs-4" style="width:56px;height:56px;font-size:1.5rem!important;">
+                        @Model.User.FullName.FirstOrDefault().ToString().ToUpper()
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">@Model.User.FullName</h5>
+                        <div class="text-muted small">@@@Model.User.Username</div>
+                    </div>
+                </div>
+                <table class="table table-sm table-borderless mb-0 small">
+                    <tr><td class="text-muted ps-0" style="width:40%">Email</td><td>@Model.User.Email</td></tr>
+                    <tr>
+                        <td class="text-muted ps-0">Rol</td>
+                        <td>
+                            @if (Model.User.IsSuperAdmin)
+                            {
+                                <span class="badge bg-warning text-dark"><i class="bi bi-star-fill me-1"></i>Süper Admin</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-primary-soft text-primary">@(Model.User.GroupName ?? "Grup yok")</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted ps-0">Durum</td>
+                        <td>
+                            @if (Model.User.IsActive)
+                            {
+                                <span class="badge bg-success-soft text-success">Aktif</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger-soft text-danger">Pasif</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr><td class="text-muted ps-0">Kayıt</td><td>@Model.User.CreatedAt.ToString("d MMM yyyy")</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="row g-3 h-100">
+            <div class="col-6 col-lg-3">
+                <div class="stat-card stat-blue">
+                    <div class="stat-icon"><i class="bi bi-list-task"></i></div>
+                    <div class="stat-value">@Model.TotalAssigned</div>
+                    <div class="stat-label">Atanan</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-card stat-orange">
+                    <div class="stat-icon"><i class="bi bi-hourglass"></i></div>
+                    <div class="stat-value">@Model.OpenAssigned</div>
+                    <div class="stat-label">Açık</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-card stat-green">
+                    <div class="stat-icon"><i class="bi bi-check2-all"></i></div>
+                    <div class="stat-value">@Model.DoneAssigned</div>
+                    <div class="stat-label">Tamamlanan</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-card stat-purple">
+                    <div class="stat-icon"><i class="bi bi-pencil-square"></i></div>
+                    <div class="stat-value">@Model.CreatedTasks.Count()</div>
+                    <div class="stat-label">Oluşturulan</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab navigasyonu -->
+<ul class="nav nav-tabs mb-0" id="userTabs">
+    <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-assigned">
+            <i class="bi bi-person-check me-1"></i>Atanan Görevler
+            <span class="badge bg-primary ms-1">@Model.TotalAssigned</span>
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-created">
+            <i class="bi bi-plus-circle me-1"></i>Oluşturulan Görevler
+            <span class="badge bg-secondary ms-1">@Model.CreatedTasks.Count()</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="tab-assigned">
+        @await Html.PartialAsync("_TaskTable", Model.AssignedTasks)
+    </div>
+    <div class="tab-pane fade" id="tab-created">
+        @await Html.PartialAsync("_TaskTable", Model.CreatedTasks)
+    </div>
+</div>
+
+<!-- Proje Yetkileri -->
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-transparent border-bottom px-4 pt-4 pb-3">
+        <h6 class="fw-bold mb-0"><i class="bi bi-folder-check me-2 text-success"></i>Proje Yetkileri</h6>
+        <p class="text-muted small mb-0 mt-1">Gruba ek olarak bu kullanıcıya özel erişim verilen projeler</p>
+    </div>
+    <div class="card-body p-4">
+        <div class="row g-4">
+            <div class="col-md-5">
+                <h6 class="fw-semibold text-muted small text-uppercase mb-3">Mevcut Proje Erişimleri</h6>
+                @if (!Model.ExtraProjects.Any())
+                {
+                    <p class="text-muted small fst-italic">Ek proje erişimi yok.</p>
+                }
+                else
+                {
+                    @foreach (var p in Model.ExtraProjects)
+                    {
+                        <div class="d-flex align-items-center gap-2 mb-2 p-2 bg-light rounded">
+                            <span class="project-key-badge d-inline-flex align-items-center justify-content-center"
+                                  style="width:30px;height:30px;font-size:9px;flex-shrink:0;">
+                                @(string.IsNullOrEmpty(p.Key) ? p.Name.Substring(0, Math.Min(3, p.Name.Length)).ToUpper() : p.Key)
+                            </span>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold small">@p.Name</div>
+                                <div class="text-muted" style="font-size:11px;">@p.GroupName</div>
+                            </div>
+                            <form method="post" asp-action="RemoveUserProject" asp-route-userId="@Model.User.Id" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="projectId" value="@p.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"
+                                        onclick="return confirm('@p.Name erişimini kaldır?')">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </form>
+                        </div>
+                    }
+                }
+            </div>
+            <div class="col-md-7">
+                <h6 class="fw-semibold text-muted small text-uppercase mb-3">Proje Ekle</h6>
+                @{
+                    var extraIds = Model.ExtraProjects.Select(p => p.Id).ToHashSet();
+                    var addable  = Model.AllProjects.Where(p => !extraIds.Contains(p.Id)).ToList();
+                }
+                @if (!addable.Any())
+                {
+                    <p class="text-muted small fst-italic">Eklenebilecek proje kalmadı.</p>
+                }
+                else
+                {
+                    <form method="post" asp-action="AddUserProject" asp-route-userId="@Model.User.Id">
+                        @Html.AntiForgeryToken()
+                        <div class="d-flex gap-2">
+                            <select name="projectId" class="form-select form-select-sm">
+                                <option value="">Proje seçin...</option>
+                                @foreach (var p in addable)
+                                {
+                                    <option value="@p.Id">@p.Name (@p.GroupName)</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-success btn-sm text-nowrap">
+                                <i class="bi bi-plus-lg me-1"></i>Ekle
+                            </button>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>

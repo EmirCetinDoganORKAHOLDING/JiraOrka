@@ -1,0 +1,75 @@
+@model IEnumerable<Tezgah.Models.TaskItem>
+@{
+    var tasks = Model?.ToList() ?? new List<Tezgah.Models.TaskItem>();
+}
+<div class="card border-0 shadow-sm border-top-0 rounded-top-0">
+    <div class="card-body p-0">
+        @if (!tasks.Any())
+        {
+            <div class="empty-state p-5">
+                <i class="bi bi-inbox"></i>
+                <p>Görev bulunamadı</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Görev</th>
+                            <th>Proje</th>
+                            <th>Atanan</th>
+                            <th>Talep Eden</th>
+                            <th>Öncelik</th>
+                            <th>Durum</th>
+                            <th>Son Tarih</th>
+                            <th>Oluşturulma</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in tasks)
+                        {
+                            <tr style="cursor:pointer" onclick="window.location='/Tasks/Details/@t.Id'">
+                                <td class="ps-4 fw-medium">@t.Title</td>
+                                <td class="text-muted small">@t.ProjectName</td>
+                                <td class="small">@(t.AssignedToName ?? "—")</td>
+                                <td class="small">@(t.RequesterName ?? "—")</td>
+                                <td>
+                                    <span class="badge @GetPriorityBadge(t.Priority)">@t.PriorityLabel</span>
+                                </td>
+                                <td>
+                                    <span class="badge @GetStatusBadge(t.Status)">@t.StatusLabel</span>
+                                </td>
+                                <td class="small text-muted">
+                                    @(t.DueDate.HasValue ? t.DueDate.Value.ToString("d MMM yyyy") : "—")
+                                </td>
+                                <td class="small text-muted">@t.CreatedAt.ToString("d MMM yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    string GetPriorityBadge(Tezgah.Models.TaskPriority p) => p switch
+    {
+        Tezgah.Models.TaskPriority.Low      => "bg-success-soft text-success",
+        Tezgah.Models.TaskPriority.Medium   => "bg-warning-soft text-warning",
+        Tezgah.Models.TaskPriority.High     => "bg-orange-soft text-orange",
+        Tezgah.Models.TaskPriority.Critical => "bg-danger-soft text-danger",
+        _ => "bg-secondary"
+    };
+
+    string GetStatusBadge(Tezgah.Models.TaskStatus s) => s switch
+    {
+        Tezgah.Models.TaskStatus.Todo       => "bg-secondary-soft text-secondary",
+        Tezgah.Models.TaskStatus.InProgress => "bg-primary-soft text-primary",
+        Tezgah.Models.TaskStatus.InReview   => "bg-warning-soft text-warning",
+        Tezgah.Models.TaskStatus.Done       => "bg-success-soft text-success",
+        _ => "bg-secondary"
+    };
+}

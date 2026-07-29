@@ -1,0 +1,229 @@
+@model Project
+@{
+    ViewData["Title"] = Model.Name;
+    var tasks         = ViewBag.Tasks as IEnumerable<Tezgah.Models.TaskItem> ?? [];
+    var taskList      = tasks.ToList();
+    var directMembers = ViewBag.DirectMembers as IEnumerable<Tezgah.Models.AppUser> ?? [];
+    var allUsers      = ViewBag.AllUsers as IEnumerable<Tezgah.Models.AppUser> ?? [];
+    var directIds     = directMembers.Select(m => m.Id).ToHashSet();
+}
+
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="/Projects/Index">Projeler</a></li>
+                <li class="breadcrumb-item active">@Model.Name</li>
+            </ol>
+        </nav>
+        <h2 class="page-title mb-0">
+            <span class="project-key-badge d-inline-flex me-2" style="width:36px;height:36px;font-size:10px;">
+                @(Model.Key ?? Model.Name.Substring(0, Math.Min(3, Model.Name.Length)).ToUpper())
+            </span>
+            @Model.Name
+        </h2>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/Board/Index?projectId=@Model.Id" class="btn btn-primary">
+            <i class="bi bi-kanban me-2"></i>Kanban Board
+        </a>
+        <a href="/Tasks/Create?projectId=@Model.Id" class="btn btn-outline-primary">
+            <i class="bi bi-plus-lg me-2"></i>Görev Ekle
+        </a>
+        @if (User.HasClaim("IsSuperAdmin", "true"))
+        {
+            <a href="/Projects/Edit/@Model.Id" class="btn btn-outline-secondary">
+                <i class="bi bi-pencil"></i>
+            </a>
+        }
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card stat-blue">
+            <div class="stat-icon"><i class="bi bi-list-task"></i></div>
+            <div class="stat-value">@taskList.Count</div>
+            <div class="stat-label">Toplam Görev</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card stat-orange">
+            <div class="stat-icon"><i class="bi bi-hourglass"></i></div>
+            <div class="stat-value">@taskList.Count(t => t.Status == Tezgah.Models.TaskStatus.InProgress)</div>
+            <div class="stat-label">Devam Ediyor</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card stat-green">
+            <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-value">@taskList.Count(t => t.Status == Tezgah.Models.TaskStatus.Done)</div>
+            <div class="stat-label">Tamamlanan</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card stat-purple">
+            <div class="stat-icon"><i class="bi bi-people"></i></div>
+            <div class="stat-value">@Model.GroupName</div>
+            <div class="stat-label" style="font-size:11px;">Yetki Grubu</div>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Description))
+{
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h6 class="fw-semibold text-muted mb-2">PROJE AÇIKLAMASI</h6>
+            <p class="mb-0">@Model.Description</p>
+        </div>
+    </div>
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center px-4 pt-4 pb-3">
+        <h6 class="fw-bold mb-0"><i class="bi bi-list-task me-2 text-primary"></i>Görevler</h6>
+    </div>
+    <div class="card-body p-0">
+        @if (!taskList.Any())
+        {
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <p>Bu projede henüz görev yok</p>
+                <a href="/Tasks/Create?projectId=@Model.Id" class="btn btn-primary btn-sm">Görev Ekle</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Görev</th>
+                            <th>Durum</th>
+                            <th>Öncelik</th>
+                            <th>Atanan</th>
+                            <th>Son Tarih</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var task in taskList.OrderBy(t => t.Status).ThenByDescending(t => t.Priority))
+                        {
+                            <tr onclick="window.location='/Tasks/Details/@task.Id'">
+                                <td class="ps-4">
+                                    <div class="fw-semibold">@task.Title</div>
+                                </td>
+                                <td><span class="task-status-badge status-@task.Status.ToString().ToLower()">@task.StatusLabel</span></td>
+                                <td><span class="priority-badge @task.PriorityClass">@task.PriorityLabel</span></td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(task.AssignedToName))
+                                    {
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="mini-avatar">@task.AssignedToName.FirstOrDefault().ToString().ToUpper()</div>
+                                            <span class="small">@task.AssignedToName</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Atanmadı</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (task.DueDate.HasValue)
+                                    {
+                                        <span class="small @(task.DueDate < DateTime.UtcNow && task.Status != Tezgah.Models.TaskStatus.Done ? "text-danger fw-semibold" : "text-muted")">
+                                            @task.DueDate.Value.ToString("d MMM yyyy")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">—</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@if (User.HasClaim("IsSuperAdmin", "true"))
+{
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-transparent border-bottom d-flex align-items-center px-4 pt-4 pb-3">
+            <h6 class="fw-bold mb-0">
+                <i class="bi bi-person-plus me-2 text-purple"></i>
+                Ek Proje Üyeleri
+                <span class="text-muted fw-normal small ms-2">Gruba ek olarak bu projeye özel erişim verilenler</span>
+            </h6>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-md-5">
+                    <h6 class="fw-semibold text-muted mb-3 small text-uppercase">Mevcut Ek Üyeler</h6>
+                    @if (!directMembers.Any())
+                    {
+                        <p class="text-muted small fst-italic">Henüz ek üye atanmadı.</p>
+                    }
+                    else
+                    {
+                        <div class="member-list">
+                            @foreach (var member in directMembers)
+                            {
+                                <div class="member-item">
+                                    <div class="table-avatar" style="width:32px;height:32px;font-size:13px;">
+                                        @member.FullName.FirstOrDefault().ToString().ToUpper()
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold small">@member.FullName</div>
+                                        <div class="text-muted" style="font-size:11px;">@member.Email</div>
+                                    </div>
+                                    <form method="post" asp-action="RemoveMember" asp-route-projectId="@Model.Id" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@member.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"
+                                                onclick="return confirm('@member.FullName kişisini projeden çıkar?')">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="col-md-7">
+                    <h6 class="fw-semibold text-muted mb-3 small text-uppercase">Kullanıcı Ekle</h6>
+                    @{
+                        var addableUsers = allUsers.Where(u => !u.IsSuperAdmin && !directIds.Contains(u.Id)).ToList();
+                    }
+                    @if (!addableUsers.Any())
+                    {
+                        <p class="text-muted small fst-italic">Eklenebilecek kullanıcı kalmadı.</p>
+                    }
+                    else
+                    {
+                        <form method="post" asp-action="AddMember" asp-route-projectId="@Model.Id">
+                            @Html.AntiForgeryToken()
+                            <div class="d-flex gap-2">
+                                <select name="userId" class="form-select form-select-sm">
+                                    <option value="">Kullanıcı seçin...</option>
+                                    @foreach (var u in addableUsers)
+                                    {
+                                        <option value="@u.Id">
+                                            @u.FullName @(!string.IsNullOrEmpty(u.GroupName) ? $"({u.GroupName})" : "(Grup yok)")
+                                        </option>
+                                    }
+                                </select>
+                                <button type="submit" class="btn btn-primary btn-sm text-nowrap">
+                                    <i class="bi bi-plus-lg me-1"></i>Ekle
+                                </button>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}

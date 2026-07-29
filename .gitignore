@@ -1,0 +1,31 @@
+# ── .NET build çıktıları ──
+[Bb]in/
+[Oo]bj/
+[Pp]ublish/
+[Dd]ebug/
+[Rr]elease/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.dll
+*.pdb
+
+# ── Arşiv/paket çıktıları ──
+*.zip
+
+# ── Güvenlik: gizli config (repoya girmez) ──
+**/appsettings.json
+**/appsettings.*.json
+!**/appsettings.Example.json
+*.pfx
+secrets.json
+
+# ── OS / editör ──
+.DS_Store
+**/.DS_Store
+
+# JiraOrka ek publish çıktıları
+hr_publish/
+publish/
+*.zip

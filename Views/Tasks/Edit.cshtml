@@ -1,0 +1,95 @@
+@model EditTaskViewModel
+@{
+    ViewData["Title"] = "Görev Düzenle";
+}
+
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="/Tasks/Details/@Model.Id">Görev Detayı</a></li>
+                <li class="breadcrumb-item active">Düzenle</li>
+            </ol>
+        </nav>
+        <h2 class="page-title mb-0"><i class="bi bi-pencil-square me-2 text-primary"></i>Görevi Düzenle</h2>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form method="post" asp-action="Edit">
+                    <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="All" class="alert alert-danger small py-2"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label fw-medium">Başlık</label>
+                        <input asp-for="Title" class="form-control form-control-lg" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label fw-medium">Açıklama</label>
+                        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="ProjectId" class="form-label fw-medium">Proje</label>
+                            <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+                                <option value="">Proje Seçin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="AssignedToId" class="form-label fw-medium">Atanan Kişi</label>
+                            <select asp-for="AssignedToId" asp-items="Model.Users" class="form-select">
+                                <option value="">Seçin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="RequesterId" class="form-label fw-medium">Talep Eden</label>
+                            <select asp-for="RequesterId" asp-items="Model.Users" class="form-select">
+                                <option value="">Seçin (Opsiyonel)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="RequesterDetails" class="form-label fw-medium">Talep Eden Notları</label>
+                            <input asp-for="RequesterDetails" class="form-control"
+                                   placeholder="Telefon, firma, e-posta..." />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Status" class="form-label fw-medium">Durum</label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="0">⬜ Yapılacak</option>
+                                <option value="1">🔵 Devam Ediyor</option>
+                                <option value="2">🟡 İncelemede</option>
+                                <option value="3">✅ Tamamlandı</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Priority" class="form-label fw-medium">Öncelik</label>
+                            <select asp-for="Priority" class="form-select">
+                                <option value="0">🟢 Düşük</option>
+                                <option value="1">🟡 Orta</option>
+                                <option value="2">🟠 Yüksek</option>
+                                <option value="3">🔴 Kritik</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="DueDate" class="form-label fw-medium">Son Tarih</label>
+                            <input asp-for="DueDate" type="date" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Güncelle
+                        </button>
+                        <a href="/Tasks/Details/@Model.Id" class="btn btn-outline-secondary">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

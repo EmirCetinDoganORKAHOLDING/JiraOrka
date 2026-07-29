@@ -1,0 +1,111 @@
+@model IEnumerable<PermissionGroup>
+@{
+    ViewData["Title"] = "Yetki Grupları";
+    var groups = Model.ToList();
+}
+
+<div class="page-header">
+    <h2 class="page-title"><i class="bi bi-shield-check me-2 text-primary"></i>Yetki Grupları</h2>
+    <a href="/Admin/CreateGroup" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Yeni Grup
+    </a>
+</div>
+
+@if (!groups.Any())
+{
+    <div class="empty-state large">
+        <i class="bi bi-shield-x"></i>
+        <h5>Henüz yetki grubu yok</h5>
+        <p class="text-muted">Kullanıcıları organize etmek için gruplar oluşturun.</p>
+        <a href="/Admin/CreateGroup" class="btn btn-primary">Grup Oluştur</a>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var group in groups)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="group-icon-wrap">
+                                <i class="bi bi-shield-fill-check text-primary"></i>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                    <li><a class="dropdown-item" href="/Admin/EditGroup/@group.Id">
+                                        <i class="bi bi-pencil me-2"></i>Düzenle
+                                    </a></li>
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    <li>
+                                        <button class="dropdown-item text-danger"
+                                                onclick="confirmDeleteGroup(@group.Id, '@group.Name')">
+                                            <i class="bi bi-trash me-2"></i>Sil
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <h6 class="fw-bold mb-1">@group.Name</h6>
+                        @if (!string.IsNullOrEmpty(group.Description))
+                        {
+                            <p class="text-muted small mb-3">@group.Description</p>
+                        }
+                        <div class="mb-3">
+                            <span class="badge me-1 @(group.CanCreateProjects ? "bg-success-soft text-success" : "bg-secondary-soft text-muted")">
+                                <i class="bi bi-folder-plus me-1"></i>Proje Oluştur
+                            </span>
+                            <span class="badge me-1 @(group.CanManageTasks ? "bg-blue-soft text-primary" : "bg-secondary-soft text-muted")">
+                                <i class="bi bi-list-task me-1"></i>Görev Yönet
+                            </span>
+                            <span class="badge @(group.CanViewReports ? "bg-purple-soft text-purple" : "bg-secondary-soft text-muted")">
+                                <i class="bi bi-bar-chart me-1"></i>Raporlar
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-center text-muted small">
+                            <i class="bi bi-people me-2"></i>
+                            <strong class="text-dark me-1">@group.MemberCount</strong> üye
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteGroupModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Grubu Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="deleteGroupName"></strong> grubunu silmek istediğinize emin misiniz?</p>
+                <p class="text-muted small">Gruptaki kullanıcıların grup ataması kaldırılacak.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form id="deleteGroupForm" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Sil</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function confirmDeleteGroup(id, name) {
+    document.getElementById('deleteGroupName').textContent = name;
+    document.getElementById('deleteGroupForm').action = '/Admin/DeleteGroup/' + id;
+    new bootstrap.Modal(document.getElementById('deleteGroupModal')).show();
+}
+</script>
+}

@@ -1,0 +1,184 @@
+@model UserKanbanViewModel
+@using Tezgah.Models
+@using TaskStatus = Tezgah.Models.TaskStatus
+@{
+    ViewData["Title"] = Model.User.FullName + " - Kanban";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-3">
+        <a href="/Admin/Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div class="table-avatar @(Model.User.IsSuperAdmin ? "bg-warning text-dark" : "")">
+            @Model.User.FullName.FirstOrDefault().ToString().ToUpper()
+        </div>
+        <div>
+            <h2 class="page-title mb-0">@Model.User.FullName</h2>
+            <div class="text-muted small">
+                @if (Model.User.IsSuperAdmin)
+                {
+                    <span><i class="bi bi-star-fill text-warning me-1"></i>Süper Admin</span>
+                }
+                else
+                {
+                    @(Model.User.GroupName ?? "Grup yok")
+                }
+                <span class="ms-2">·</span>
+                <span class="ms-2">@Model.TotalTasks görev</span>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/Admin/UserDetail/@Model.User.Id" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-person-lines-fill me-1"></i>Detay
+        </a>
+        <a href="/Tasks/Create" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Görev Ekle
+        </a>
+    </div>
+</div>
+
+<!-- Özet istatistikler -->
+<div class="row g-2 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-light text-center py-2">
+            <div class="fw-bold fs-5">@Model.TodoTasks.Count</div>
+            <div class="small text-muted">Yapılacak</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-primary bg-opacity-10 text-center py-2">
+            <div class="fw-bold fs-5 text-primary">@Model.InProgressTasks.Count</div>
+            <div class="small text-muted">Devam Ediyor</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-warning bg-opacity-10 text-center py-2">
+            <div class="fw-bold fs-5 text-warning">@Model.InReviewTasks.Count</div>
+            <div class="small text-muted">İncelemede</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-success bg-opacity-10 text-center py-2">
+            <div class="fw-bold fs-5 text-success">@Model.DoneTasks.Count</div>
+            <div class="small text-muted">Tamamlandı</div>
+        </div>
+    </div>
+</div>
+
+@if (Model.TotalTasks == 0)
+{
+    <div class="empty-state large">
+        <i class="bi bi-inbox"></i>
+        <h5>Atanmış görev yok</h5>
+        <p class="text-muted">@Model.User.FullName kullanıcısına henüz görev atanmamış.</p>
+    </div>
+}
+else
+{
+    <div class="kanban-board" id="kanban-board">
+        @{
+            var columns = new[]
+            {
+                ("todo",       "Yapılacak",     "bi-circle",        "col-todo",       (IReadOnlyList<TaskItem>)Model.TodoTasks,       0),
+                ("inprogress", "Devam Ediyor",  "bi-arrow-clockwise","col-inprogress", (IReadOnlyList<TaskItem>)Model.InProgressTasks, 1),
+                ("inreview",   "İncelemede",    "bi-eye",           "col-inreview",   (IReadOnlyList<TaskItem>)Model.InReviewTasks,   2),
+                ("done",       "Tamamlandı",    "bi-check-circle",  "col-done",       (IReadOnlyList<TaskItem>)Model.DoneTasks,       3)
+            };
+        }
+        @foreach (var (colId, label, icon, cssClass, tasks, statusInt) in columns)
+        {
+            <div class="kanban-column @cssClass">
+                <div class="kanban-column-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi @icon"></i>
+                        <span class="column-title">@label</span>
+                        <span class="badge bg-secondary rounded-pill">@tasks.Count</span>
+                    </div>
+                </div>
+                <div class="kanban-column-body sortable-list" data-status="@statusInt" id="col-@colId">
+                    @foreach (var task in tasks)
+                    {
+                        <div class="task-card" data-task-id="@task.Id">
+                            <div class="task-card-header">
+                                <span class="priority-badge @task.PriorityClass">@task.PriorityLabel</span>
+                                <a href="/Tasks/Details/@task.Id" class="task-card-menu" title="Detay">
+                                    <i class="bi bi-three-dots"></i>
+                                </a>
+                            </div>
+                            <a href="/Tasks/Details/@task.Id" class="task-card-title">@task.Title</a>
+                            <div class="small text-muted mb-1">
+                                <i class="bi bi-folder me-1"></i>@task.ProjectName
+                            </div>
+                            @if (!string.IsNullOrEmpty(task.Description))
+                            {
+                                <p class="task-card-desc">@(task.Description.Length > 80 ? task.Description[..80] + "..." : task.Description)</p>
+                            }
+                            @if (!string.IsNullOrEmpty(task.RequesterName))
+                            {
+                                <div class="small text-muted mb-1">
+                                    <i class="bi bi-hand-index me-1"></i>@task.RequesterName
+                                </div>
+                            }
+                            <div class="task-card-footer">
+                                <div class="task-card-meta">
+                                    @if (task.DueDate.HasValue)
+                                    {
+                                        <span class="@(task.DueDate < DateTime.UtcNow && task.Status != TaskStatus.Done ? "text-danger" : "text-muted") small">
+                                            <i class="bi bi-calendar3"></i> @task.DueDate.Value.ToString("d MMM")
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+@Html.AntiForgeryToken()
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const lists = document.querySelectorAll('.sortable-list');
+
+    lists.forEach(list => {
+        Sortable.create(list, {
+            group: 'kanban',
+            animation: 200,
+            ghostClass: 'task-card-ghost',
+            dragClass: 'task-card-dragging',
+            onEnd: async function (evt) {
+                const taskId  = evt.item.dataset.taskId;
+                const newStatus = evt.to.dataset.status;
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+                try {
+                    const res = await fetch('/Tasks/UpdateStatus', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                        body: JSON.stringify({ taskId: parseInt(taskId), status: parseInt(newStatus) })
+                    });
+                    const data = await res.json();
+                    if (!data.success) {
+                        evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
+                        alert('Durum güncellenemedi: ' + data.message);
+                    } else {
+                        // sütun sayılarını güncelle
+                        document.querySelectorAll('.kanban-column').forEach(col => {
+                            const badge = col.querySelector('.badge');
+                            if (badge) badge.textContent = col.querySelectorAll('.task-card').length;
+                        });
+                    }
+                } catch {
+                    evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
+                }
+            }
+        });
+    });
+});
+</script>
+}
