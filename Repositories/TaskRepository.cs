@@ -211,23 +211,23 @@ public class TaskRepository
             new { SprintId = sprintId });
     }
 
-    /// Projeye ait, hiçbir sprint'e atanmamış görevler (backlog)
+    /// Projeye ait, hiçbir sprint'e atanmamış AÇIK görevler (backlog — tamamlananlar hariç)
     public async Task<IEnumerable<TaskItem>> GetBacklogByProjectAsync(int projectId)
     {
         using var conn = _context.CreateConnection();
         return await conn.QueryAsync<TaskItem>(
-            BaseSelect + " WHERE t.ProjectId = @ProjectId AND t.SprintId IS NULL ORDER BY t.Priority DESC, t.CreatedAt DESC",
+            BaseSelect + " WHERE t.ProjectId = @ProjectId AND t.SprintId IS NULL AND t.Status <> 3 ORDER BY t.Priority DESC, t.CreatedAt DESC",
             new { ProjectId = projectId });
     }
 
-    /// Birden çok projeye ait, hiçbir sprint'e atanmamış görevler (tüm projeler backlog'u)
+    /// Birden çok projeye ait, hiçbir sprint'e atanmamış AÇIK görevler (tüm projeler backlog'u — tamamlananlar hariç)
     public async Task<IEnumerable<TaskItem>> GetBacklogByProjectsAsync(IEnumerable<int> projectIds)
     {
         var ids = projectIds.ToList();
         if (ids.Count == 0) return Enumerable.Empty<TaskItem>();
         using var conn = _context.CreateConnection();
         return await conn.QueryAsync<TaskItem>(
-            BaseSelect + " WHERE t.ProjectId IN @Ids AND t.SprintId IS NULL ORDER BY p.Name, t.Priority DESC, t.CreatedAt DESC",
+            BaseSelect + " WHERE t.ProjectId IN @Ids AND t.SprintId IS NULL AND t.Status <> 3 ORDER BY p.Name, t.Priority DESC, t.CreatedAt DESC",
             new { Ids = ids });
     }
 
