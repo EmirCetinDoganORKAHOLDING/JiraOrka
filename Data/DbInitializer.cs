@@ -23,6 +23,32 @@ public static class DbInitializer
                 )
             END");
 
+        // Sprint tablosu (idempotent)
+        conn.Execute(@"
+            IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'OrkaJira_Sprints') AND type = 'U')
+            BEGIN
+                CREATE TABLE OrkaJira_Sprints (
+                    Id          INT IDENTITY(1,1) PRIMARY KEY,
+                    ProjectId   INT NOT NULL,
+                    Name        NVARCHAR(150) NOT NULL,
+                    Goal        NVARCHAR(1000) NULL,
+                    StartDate   DATETIME NOT NULL,
+                    EndDate     DATETIME NOT NULL,
+                    Status      INT NOT NULL DEFAULT 0,
+                    CreatedById INT NOT NULL,
+                    CreatedAt   DATETIME NOT NULL DEFAULT GETUTCDATE(),
+                    CONSTRAINT FK_Sprint_Project FOREIGN KEY (ProjectId) REFERENCES OrkaJira_Projects(Id) ON DELETE CASCADE
+                )
+            END");
+
+        // Tasks.SprintId kolonu (görevlerin sprint'e atanması için)
+        conn.Execute(@"
+            IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'OrkaJira_Tasks') AND name = 'SprintId')
+            BEGIN
+                ALTER TABLE OrkaJira_Tasks ADD SprintId INT NULL
+                    REFERENCES OrkaJira_Sprints(Id) ON DELETE NO ACTION ON UPDATE NO ACTION
+            END");
+
         // RequesterId kolonu (talep eden kişi FK)
         conn.Execute(@"
             IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'OrkaJira_Tasks') AND name = 'RequesterId')

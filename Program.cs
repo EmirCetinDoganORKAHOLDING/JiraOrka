@@ -43,6 +43,7 @@ builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<GroupRepository>();
 builder.Services.AddScoped<ProjectRepository>();
 builder.Services.AddScoped<TaskRepository>();
+builder.Services.AddScoped<SprintRepository>();
 builder.Services.AddScoped<ProjectMemberRepository>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<CurrentUserService>();

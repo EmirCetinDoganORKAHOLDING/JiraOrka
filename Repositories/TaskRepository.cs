@@ -20,13 +20,15 @@ public class TaskRepository
                a.Email    AS AssignedToEmail,
                c.FullName AS CreatedByName,
                COALESCE(r.FullName, t.RequesterName) AS RequesterName,
-               r.Email    AS RequesterEmail
+               r.Email    AS RequesterEmail,
+               s.Name     AS SprintName
         FROM OrkaJira_Tasks t
         LEFT JOIN OrkaJira_Projects        p ON t.ProjectId   = p.Id
         LEFT JOIN OrkaJira_PermissionGroups g ON p.GroupId     = g.Id
         LEFT JOIN OrkaJira_Users           a ON t.AssignedToId = a.Id
         LEFT JOIN OrkaJira_Users           c ON t.CreatedById  = c.Id
-        LEFT JOIN OrkaJira_Users           r ON t.RequesterId  = r.Id";
+        LEFT JOIN OrkaJira_Users           r ON t.RequesterId  = r.Id
+        LEFT JOIN OrkaJira_Sprints         s ON t.SprintId     = s.Id";
 
     public async Task<IEnumerable<TaskItem>> GetByProjectAsync(int projectId)
     {
@@ -198,6 +200,49 @@ public class TaskRepository
         return await conn.QueryAsync<TaskItem>(
             BaseSelect + " WHERE t.CreatedById = @UserId ORDER BY t.CreatedAt DESC",
             new { UserId = userId });
+    }
+
+    // ─── SPRINT ─────────────────────────────────────────────────────────────
+    public async Task<IEnumerable<TaskItem>> GetBySprintAsync(int sprintId)
+    {
+        using var conn = _context.CreateConnection();
+        return await conn.QueryAsync<TaskItem>(
+            BaseSelect + " WHERE t.SprintId = @SprintId ORDER BY t.Priority DESC, t.CreatedAt DESC",
+            new { SprintId = sprintId });
+    }
+
+    /// Projeye ait, hiçbir sprint'e atanmamış görevler (backlog)
+    public async Task<IEnumerable<TaskItem>> GetBacklogByProjectAsync(int projectId)
+    {
+        using var conn = _context.CreateConnection();
+        return await conn.QueryAsync<TaskItem>(
+            BaseSelect + " WHERE t.ProjectId = @ProjectId AND t.SprintId IS NULL ORDER BY t.Priority DESC, t.CreatedAt DESC",
+            new { ProjectId = projectId });
+    }
+
+    public async Task AssignToSprintAsync(int taskId, int sprintId)
+    {
+        using var conn = _context.CreateConnection();
+        await conn.ExecuteAsync(
+            "UPDATE OrkaJira_Tasks SET SprintId = @SprintId, UpdatedAt = GETUTCDATE() WHERE Id = @Id",
+            new { SprintId = sprintId, Id = taskId });
+    }
+
+    public async Task RemoveFromSprintAsync(int taskId)
+    {
+        using var conn = _context.CreateConnection();
+        await conn.ExecuteAsync(
+            "UPDATE OrkaJira_Tasks SET SprintId = NULL, UpdatedAt = GETUTCDATE() WHERE Id = @Id",
+            new { Id = taskId });
+    }
+
+    /// Sprint tamamlanırken: bitmemiş görevleri backlog'a geri gönder (SprintId = NULL)
+    public async Task ReturnIncompleteToBacklogAsync(int sprintId)
+    {
+        using var conn = _context.CreateConnection();
+        await conn.ExecuteAsync(
+            "UPDATE OrkaJira_Tasks SET SprintId = NULL, UpdatedAt = GETUTCDATE() WHERE SprintId = @SprintId AND Status <> 3",
+            new { SprintId = sprintId });
     }
 
     public async Task<IEnumerable<TaskItem>> GetFilteredAsync(

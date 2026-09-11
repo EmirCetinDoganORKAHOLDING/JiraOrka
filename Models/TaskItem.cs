@@ -39,6 +39,8 @@ public class TaskItem
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public int GroupId { get; set; }
     public string? GroupName { get; set; }
+    public int? SprintId { get; set; }
+    public string? SprintName { get; set; }
     public List<Comment> Comments { get; set; } = new();
 
     public string StatusLabel => Status switch

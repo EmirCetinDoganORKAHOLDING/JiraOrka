@@ -1,0 +1,185 @@
+@model SprintListViewModel
+@{
+    ViewData["Title"] = "Sprintler";
+    var isReadOnly = User.HasClaim("IsReadOnly", "true");
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <h2 class="page-title mb-0"><i class="bi bi-lightning-charge me-2 text-primary"></i>Sprintler</h2>
+        @if (Model.Projects.Any())
+        {
+            <div class="dropdown">
+                <button class="btn btn-sm dropdown-toggle d-flex align-items-center gap-2 px-3 py-2
+                               @(Model.ProjectId.HasValue ? "btn-primary" : "btn-outline-secondary")"
+                        type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-folder2"></i>
+                    <span>@(Model.ProjectId.HasValue ? Model.ProjectName : "Tüm Projeler")</span>
+                </button>
+                <ul class="dropdown-menu shadow-sm border-0" style="min-width:240px;">
+                    <li><a class="dropdown-item @(!Model.ProjectId.HasValue ? "active" : "")" href="/Sprints/Index">
+                        <i class="bi bi-grid me-2"></i>Tüm Projeler
+                    </a></li>
+                    <li><hr class="dropdown-divider my-1"></li>
+                    @foreach (var p in Model.Projects)
+                    {
+                        var key = string.IsNullOrEmpty(p.Key)
+                            ? p.Name.Substring(0, Math.Min(3, p.Name.Length)).ToUpper()
+                            : p.Key;
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2 py-2 @(p.Id == Model.ProjectId ? "active" : "")"
+                               href="/Sprints/Index?projectId=@p.Id">
+                                <span class="project-key-badge d-inline-flex align-items-center justify-content-center"
+                                      style="width:28px;height:28px;font-size:10px;flex-shrink:0;">@key</span>
+                                <span class="fw-semibold" style="font-size:13px;">@p.Name</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+    @if (!isReadOnly && Model.Projects.Any())
+    {
+        <a href="/Sprints/Create@(Model.ProjectId.HasValue ? $"?projectId={Model.ProjectId}" : "")" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Yeni Sprint
+        </a>
+    }
+</div>
+
+@if (!Model.Projects.Any())
+{
+    <div class="empty-state large">
+        <i class="bi bi-lightning-charge"></i>
+        <h5>Henüz proje yok</h5>
+        <p class="text-muted">Sprint oluşturmak için önce bir projeye erişiminiz olmalı.</p>
+    </div>
+}
+else if (!Model.Sprints.Any())
+{
+    <div class="empty-state large">
+        <i class="bi bi-lightning-charge"></i>
+        <h5>Henüz sprint yok</h5>
+        <p class="text-muted">1 haftalık ilk sprintinizi oluşturun, backlog'tan görev ekleyin ve koşturmaya başlayın.</p>
+        @if (!isReadOnly)
+        {
+            <a href="/Sprints/Create@(Model.ProjectId.HasValue ? $"?projectId={Model.ProjectId}" : "")" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-2"></i>Sprint Oluştur
+            </a>
+        }
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var s in Model.Sprints)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge @s.StatusClass">@s.StatusLabel</span>
+                            @if (!isReadOnly)
+                            {
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                        <li><a class="dropdown-item" href="/Sprints/Board/@s.Id">
+                                            <i class="bi bi-kanban me-2"></i>Panoyu Aç
+                                        </a></li>
+                                        <li><hr class="dropdown-divider my-1"></li>
+                                        <li>
+                                            <button class="dropdown-item text-danger"
+                                                    onclick="confirmDeleteSprint(@s.Id, '@s.Name')">
+                                                <i class="bi bi-trash me-2"></i>Sil
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            }
+                        </div>
+
+                        <h6 class="fw-bold mb-1">@s.Name</h6>
+                        <div class="text-muted small mb-2">
+                            <span class="project-key-badge d-inline-flex align-items-center justify-content-center me-1"
+                                  style="width:22px;height:22px;font-size:9px;">
+                                @(string.IsNullOrEmpty(s.ProjectKey) ? s.ProjectName.Substring(0, Math.Min(3, s.ProjectName.Length)).ToUpper() : s.ProjectKey)
+                            </span>@s.ProjectName
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(s.Goal))
+                        {
+                            <p class="text-muted small mb-3"><i class="bi bi-bullseye me-1"></i>@(s.Goal.Length > 70 ? s.Goal.Substring(0, 70) + "..." : s.Goal)</p>
+                        }
+
+                        <div class="d-flex align-items-center gap-3 mb-3 text-muted small">
+                            <span><i class="bi bi-calendar3 me-1"></i>@s.StartDate.ToString("d MMM") – @s.EndDate.ToString("d MMM")</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span class="text-muted">İlerleme</span>
+                                <span class="fw-medium">%@s.ProgressPercent</span>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar @(s.Status == SprintStatus.Completed ? "bg-primary" : "bg-success")" style="width: @s.ProgressPercent%"></div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-muted small">
+                                <i class="bi bi-list-task me-1"></i>
+                                <strong class="text-dark">@s.DoneTaskCount</strong> / <strong class="text-dark">@s.TaskCount</strong> görev
+                                @if (s.Status == SprintStatus.Active)
+                                {
+                                    <span class="ms-2 @(s.DaysRemaining < 0 ? "text-danger" : (s.DaysRemaining <= 1 ? "text-warning" : ""))">
+                                        <i class="bi bi-clock-history me-1"></i>@(s.DaysRemaining < 0 ? $"{-s.DaysRemaining}g gecikme" : $"{s.DaysRemaining}g kaldı")
+                                    </span>
+                                }
+                            </div>
+                            <a href="/Sprints/Board/@s.Id" class="btn btn-primary btn-sm">
+                                <i class="bi bi-kanban me-1"></i>Pano
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteSprintModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Sprinti Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="deleteSprintName"></strong> sprintini silmek istediğinize emin misiniz?</p>
+                <p class="text-muted small">Sprint silinecek; içindeki görevler backlog'a geri döner (silinmez).</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <form id="deleteSprintForm" method="post" action="/Sprints/Delete">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="deleteSprintId" />
+                    <button type="submit" class="btn btn-danger">Sil</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function confirmDeleteSprint(id, name) {
+    document.getElementById('deleteSprintName').textContent = name;
+    document.getElementById('deleteSprintId').value = id;
+    new bootstrap.Modal(document.getElementById('deleteSprintModal')).show();
+}
+</script>
+}
