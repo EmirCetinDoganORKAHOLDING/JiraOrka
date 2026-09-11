@@ -220,6 +220,17 @@ public class TaskRepository
             new { ProjectId = projectId });
     }
 
+    /// Birden çok projeye ait, hiçbir sprint'e atanmamış görevler (tüm projeler backlog'u)
+    public async Task<IEnumerable<TaskItem>> GetBacklogByProjectsAsync(IEnumerable<int> projectIds)
+    {
+        var ids = projectIds.ToList();
+        if (ids.Count == 0) return Enumerable.Empty<TaskItem>();
+        using var conn = _context.CreateConnection();
+        return await conn.QueryAsync<TaskItem>(
+            BaseSelect + " WHERE t.ProjectId IN @Ids AND t.SprintId IS NULL ORDER BY p.Name, t.Priority DESC, t.CreatedAt DESC",
+            new { Ids = ids });
+    }
+
     public async Task AssignToSprintAsync(int taskId, int sprintId)
     {
         using var conn = _context.CreateConnection();

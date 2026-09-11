@@ -138,7 +138,10 @@ public class SprintsController : Controller
         if (!await HasProjectAccessAsync(sprint.ProjectId, project.GroupId)) return Forbid();
 
         var sprintTasks = (await _taskRepo.GetBySprintAsync(id)).ToList();
-        var backlog = (await _taskRepo.GetBacklogByProjectAsync(sprint.ProjectId)).ToList();
+
+        // Backlog: erişilebilen TÜM projelerin sprint'siz görevleri
+        var accessibleIds = (await GetAccessibleProjectsAsync()).Select(p => p.Id).ToList();
+        var backlog = (await _taskRepo.GetBacklogByProjectsAsync(accessibleIds)).ToList();
 
         var vm = new SprintBoardViewModel
         {
@@ -214,9 +217,13 @@ public class SprintsController : Controller
         if (!await CanManageSprintAsync(sprint)) return Forbid();
 
         var task = await _taskRepo.GetByIdAsync(taskId);
-        if (task == null || task.ProjectId != sprint.ProjectId)
+        if (task == null)
+            return NotFound();
+
+        // Görevin ait olduğu projeye erişim var mı? (farklı proje olabilir — sprint tüm projeleri kapsar)
+        if (!await HasProjectAccessAsync(task.ProjectId, task.GroupId))
         {
-            TempData["Error"] = "Görev bu projeye ait değil.";
+            TempData["Error"] = "Bu göreve erişim yetkiniz yok.";
             return RedirectToAction(nameof(Board), new { id = sprintId });
         }
 
