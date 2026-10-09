@@ -128,10 +128,10 @@ public class TasksController : Controller
                   {(fullTask.AssignedToName != null ? $"<p style='margin:5px 0 0;'><strong>Atanan:</strong> {fullTask.AssignedToName}</p>" : "")}
                 </div>
               </div>
-              <div style='background:#e2e8f0;padding:10px;text-align:center;border-radius:0 0 8px 8px;font-size:12px;color:#64748b;'>Tezgah</div>
+              <div style='background:#e2e8f0;padding:10px;text-align:center;border-radius:0 0 8px 8px;font-size:12px;color:#64748b;'>Workai</div>
             </div>";
 
-            await NotifyTaskParticipants(fullTask, $"[Tezgah] Yeni Görev: {fullTask.Title}",
+            await NotifyTaskParticipants(fullTask, $"[Workai] Yeni Görev: {fullTask.Title}",
                 body, _currentUser.UserId);
         }
 
@@ -220,10 +220,10 @@ public class TasksController : Controller
               <p style='margin:5px 0 0;'><strong>Yorum:</strong> {content}{attachNote}</p>
             </div>
           </div>
-          <div style='background:#e2e8f0;padding:10px;text-align:center;border-radius:0 0 8px 8px;font-size:12px;color:#64748b;'>Tezgah</div>
+          <div style='background:#e2e8f0;padding:10px;text-align:center;border-radius:0 0 8px 8px;font-size:12px;color:#64748b;'>Workai</div>
         </div>";
 
-        await NotifyTaskParticipants(task, $"[Tezgah] Yeni Yorum: {task.Title}",
+        await NotifyTaskParticipants(task, $"[Workai] Yeni Yorum: {task.Title}",
             body, _currentUser.UserId);
 
         TempData["Success"] = "Yorum eklendi.";
@@ -339,11 +339,11 @@ public class TasksController : Controller
                       <p style='margin:5px 0 0;'><strong>Yeni Durum:</strong> {newLabel}</p>
                     </div>
                   </div>
-                  <div style='background:#e2e8f0;padding:10px;text-align:center;border-radius:0 0 8px 8px;font-size:12px;color:#64748b;'>Tezgah</div>
+                  <div style='background:#e2e8f0;padding:10px;text-align:center;border-radius:0 0 8px 8px;font-size:12px;color:#64748b;'>Workai</div>
                 </div>";
 
                 await NotifyTaskParticipants(updatedTask,
-                    $"[Tezgah] Durum Değişti: {updatedTask.Title}", body, _currentUser.UserId);
+                    $"[Workai] Durum Değişti: {updatedTask.Title}", body, _currentUser.UserId);
             }
         }
 
@@ -413,11 +413,11 @@ public class TasksController : Controller
                   <p style='margin:5px 0 0;'><strong>Yeni Durum:</strong> {newLabel}</p>
                 </div>
               </div>
-              <div style='background:#e2e8f0;padding:10px;text-align:center;border-radius:0 0 8px 8px;font-size:12px;color:#64748b;'>Tezgah</div>
+              <div style='background:#e2e8f0;padding:10px;text-align:center;border-radius:0 0 8px 8px;font-size:12px;color:#64748b;'>Workai</div>
             </div>";
 
             await NotifyTaskParticipants(task,
-                $"[Tezgah] Durum Değişti: {task.Title}", body, _currentUser.UserId);
+                $"[Workai] Durum Değişti: {task.Title}", body, _currentUser.UserId);
         }
 
         return Json(new { success = true });

@@ -10,7 +10,7 @@ public class EmailSettings
     public int    SmtpPort      { get; set; } = 587;
     public string FromAddress   { get; set; } = string.Empty;
     public string Password      { get; set; } = string.Empty;
-    public string SenderName    { get; set; } = "Tezgah";
+    public string SenderName    { get; set; } = "Workai";
 }
 
 public class EmailService
@@ -59,7 +59,7 @@ public class EmailService
     public async Task SendTaskAssignedAsync(string toEmail, string toName, string taskTitle,
         string projectName, string assignedByName, int taskId)
     {
-        var subject = $"[Tezgah] Yeni Görev Atandı: {taskTitle}";
+        var subject = $"[Workai] Yeni Görev Atandı: {taskTitle}";
         var body = $@"
         <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
             <div style='background: #3b82f6; color: white; padding: 20px; border-radius: 8px 8px 0 0;'>
@@ -72,10 +72,10 @@ public class EmailService
                     <p style='margin: 0;'><strong>Görev:</strong> {taskTitle}</p>
                     <p style='margin: 5px 0 0;'><strong>Proje:</strong> {projectName}</p>
                 </div>
-                <p>Görevi görüntülemek için Tezgah'ya giriş yapabilirsin.</p>
+                <p>Görevi görüntülemek için Workai'ya giriş yapabilirsin.</p>
             </div>
             <div style='background: #e2e8f0; padding: 10px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #64748b;'>
-                Tezgah - Proje Yönetim Sistemi
+                Workai - Proje Yönetim Sistemi
             </div>
         </div>";
 
@@ -85,7 +85,7 @@ public class EmailService
     public async Task SendTaskStatusChangedAsync(string toEmail, string toName, string taskTitle,
         string oldStatus, string newStatus, string changedByName)
     {
-        var subject = $"[Tezgah] Görev Durumu Güncellendi: {taskTitle}";
+        var subject = $"[Workai] Görev Durumu Güncellendi: {taskTitle}";
         var body = $@"
         <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
             <div style='background: #10b981; color: white; padding: 20px; border-radius: 8px 8px 0 0;'>
@@ -102,7 +102,7 @@ public class EmailService
                 </div>
             </div>
             <div style='background: #e2e8f0; padding: 10px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #64748b;'>
-                Tezgah - Proje Yönetim Sistemi
+                Workai - Proje Yönetim Sistemi
             </div>
         </div>";
 
@@ -112,7 +112,7 @@ public class EmailService
     public async Task SendNewCommentAsync(string toEmail, string toName, string taskTitle,
         string commenterName, string comment)
     {
-        var subject = $"[Tezgah] Yeni Yorum: {taskTitle}";
+        var subject = $"[Workai] Yeni Yorum: {taskTitle}";
         var body = $@"
         <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
             <div style='background: #8b5cf6; color: white; padding: 20px; border-radius: 8px 8px 0 0;'>
@@ -127,7 +127,7 @@ public class EmailService
                 </div>
             </div>
             <div style='background: #e2e8f0; padding: 10px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #64748b;'>
-                Tezgah - Proje Yönetim Sistemi
+                Workai - Proje Yönetim Sistemi
             </div>
         </div>";
 
